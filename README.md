@@ -102,3 +102,23 @@ python .\exp9_broadcast_messaging\client.py
 ```
 
 The sample binds to `127.0.0.1:6009` for clients on the same computer. To connect from another computer, set `HOST` in both files to the server's LAN address and allow TCP port 6009 through its firewall.
+
+### Experiment 10: Socket Communication with Object Serialization
+
+Objective: serialize a Python object, send it from a client to a server over TCP, and return a serialized response. The example sends a name and a list of integers; the server calculates their sum.
+
+View the source with curl:
+
+```powershell
+curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp10_socket_object_serialization/server.py"
+curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp10_socket_object_serialization/client.py"
+```
+
+Run the server in one terminal, then run the client in another terminal. Enter a name and integers separated by spaces.
+
+```powershell
+python .\exp10_socket_object_serialization\server.py
+python .\exp10_socket_object_serialization\client.py
+```
+
+This pickle-based example is for trusted local connections only: never unpickle data from unknown or untrusted clients. It uses TCP port `6010`.
