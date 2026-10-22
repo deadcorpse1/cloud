@@ -1,74 +1,41 @@
 # Experiment 5: Virtual Instances, Consolidation, and Fault Tolerance
-
 ## Aim
-
 Create two Ubuntu virtual machines in VMware, serve web pages from both, distribute requests with HAProxy, consolidate the test workload, and recover the web page from a backup VM.
-
-## Requirements
-
-- VMware Workstation with Ubuntu Server 22.04/24.04 ISO
-- Two VMs named `VM1` and `VM2`, each with 2 CPUs, 2 GB RAM, and a 20 GB disk
-- Both VMs connected to the same VMware NAT network (VMnet8)
-
 ## Procedure
-
 ### 1. Create the two VMs
-
-1. In VMware, select **File > New Virtual Machine > Typical**.
-2. Choose the Ubuntu ISO, name the VM `VM1`, allocate the resources above, and finish installation.
-3. Repeat for `VM2`. Keep both VMs on **NAT (VMnet8)**.
-4. Start each VM and find its IP address:
-
-   ```bash
-   hostname -I
-   ```
-
-   Record the first address shown as `VM1_IP` and `VM2_IP`. Confirm both are on the same subnet.
-
-### 2. Install Apache and make each page identifiable
+### 2. Install Apache and make each page identifiable(vm setup)
 
 Run these commands on **both** VMs:
 
 ```bash
 sudo apt update
-sudo apt install -y apache2
-sudo systemctl enable --now apache2
-```
-
-On VM1, set its page:
-
-```bash
-echo "VM 1 - Apache web server" | sudo tee /var/www/html/index.html
-```
-
-On VM2:
-
-```bash
-echo "VM 2 - Apache web server" | sudo tee /var/www/html/index.html
+sudo apt install apache2 -y
+sudo systemctl enable apache2
+sudo systemctl status apache2
+sudo nano /var/www/html/index.html
+scroll down change the heading into clone 1
+ifconfig
 ```
 
 From the host browser, open `http://VM1_IP` and `http://VM2_IP`. Each should show its matching text.
 
-### 3. Install and configure HAProxy on VM1
+### 3. Install and configure HAProxy on VM3(loadbalancing)
 
-On VM1:
+On VM3:
 
 ```bash
 sudo apt install -y haproxy
 sudo cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.bak
 sudo nano /etc/haproxy/haproxy.cfg
 ```
-
 Keep the existing `global` and `defaults` sections. Add this at the end, replacing the two IP placeholders with the addresses you recorded:
-
 ```text
-frontend web_front
+frontend http_front
     bind *:8080
-    default_backend web_servers
+    default_backend http_servers
 
-backend web_servers
+backend http_back
     balance roundrobin
-    option httpchk GET /
     server vm1 VM1_IP:80 check
     server vm2 VM2_IP:80 check
 ```
@@ -76,45 +43,58 @@ backend web_servers
 In nano, save with **Ctrl+O**, Enter, then exit with **Ctrl+X**. Validate and start HAProxy:
 
 ```bash
-sudo haproxy -c -f /etc/haproxy/haproxy.cfg
-sudo systemctl enable --now haproxy
-sudo systemctl status haproxy --no-pager
+sudo systemctl restart haproxy
+sudo systemctl enable haproxy
+sudo systemctl status haproxy
+ifconfig
 ```
-
 Open `http://VM1_IP:8080` several times. The response should alternate between VM1 and VM2. Stop Apache on VM1 to check failover, then restart it:
 
-```bash
-sudo systemctl stop apache2
-sudo systemctl start apache2
-```
 
-### 4. Demonstrate consolidation
+### 4. Demonstrate consolidation(server consoldation)
 
 Keep both VMs running together on the same VMware host. HAProxy and one Apache backend run on VM1; the second Apache backend runs on VM2. This demonstrates consolidating several virtual workloads on one physical host while sharing requests between VMs. Confirm both pages are reachable through `http://VM1_IP:8080`.
+create 2 vms and set them up using (apache2,mysql-server)
+sudo apt update
+'''
+sudo apt install mysql-server -y
+sudo systemctl enable mysql-server
+'''
+take screenshots of 2 vms settings
+delete vm2
+come to vm1
+install mysql-server in vm1
+take screenshot of stettings vm1
+thats it 
 
-### 5. Prepare a backup VM and demonstrate recovery
 
-1. In VMware, shut down VM1 and choose **VM > Manage > Clone** (or create another Ubuntu VM named `VM1-Backup`). Connect it to VMnet8 and start it.
-2. On VM1-Backup, install Apache and create the recovery page:
 
-   ```bash
-   sudo apt update
-   sudo apt install -y apache2
-   echo "VM 1 backup page" | sudo tee /var/www/html/index.html
-   sudo systemctl enable --now apache2
-   hostname -I
-   ```
 
-3. Verify `http://VM1_BACKUP_IP` from the host browser.
-4. To simulate VM1 failure, shut down VM1 in VMware. Open `http://VM1_BACKUP_IP`; the backup page should remain available. This is a manual recovery demonstration, not automatic failover.
+3)FAULY TOLERENCE
 
-## Expected output
+ON HOST VM
 
-- VM1 and VM2 each display their own Apache page.
-- HAProxy is `active (running)` and requests are served by both backends.
-- When one backend is stopped, the other continues responding.
-- With VM1 powered off, the backup VM's page is available.
+sudo apt install rsync openssh-server -y
+mkdir -p source
+nano s.txt
 
-## Result
+ON ANOTHER VM
+sudo apt install rsync openssh-server -y
+sudo systemctl enable --now ssh
+hostname -I  #NOTE
+whoami    #NOTE
+mkdir -p backup
+cat ~/backup/s.txt
+cat backup/source/s.txt
 
-Virtual instances, basic load balancing, workload consolidation, and backup-based recovery were demonstrated.
+THEN CONTINUE ON HOST VM
+
+rsync -av ~/source whoami_response@hostname-I_response:~/backup
+cd source
+rsync -av ~/source whoami_response@hostname-I_response:~/backup
+
+
+
+
+
+

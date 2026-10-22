@@ -57,7 +57,8 @@ crontab -e
 If prompted, select **nano**. Add this line at the bottom, replacing `your_username` with the name printed by `whoami`:
 
 ```cron
-* * * * * /home/your_username/script.sh >> /home/your_username/output.log 2>&1
+(If its asked for 60 seconds ie 1 Minute)
+* /1* * * * /home/whoami_response/script.sh >> /home/whoami_response/output.log 2>&1
 ```
 
 For example, if `whoami` prints `shan`, the line should be:
@@ -80,20 +81,3 @@ sudo journalctl -u cron --since "5 minutes ago" --no-pager
 
 You should see the scheduled command run and new timestamps in `output.log`.
 
-### 5. Optional: prioritize a CPU task
-
-To compare task priority, run a CPU task at low priority:
-
-```bash
-nice -n 10 sha256sum /dev/zero
-```
-
-Stop it with **Ctrl+C**. A higher nice value gives the task lower CPU scheduling priority.
-
-## Expected output
-
-The log contains a new timestamp and system uptime about once per minute, and the cron journal shows the command being run.
-
-## Result
-
-Recurring task execution and output logging were configured and verified with cron.
