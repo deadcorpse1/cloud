@@ -122,3 +122,23 @@ python .\exp10_socket_object_serialization\client.py
 ```
 
 This pickle-based example is for trusted local connections only: never unpickle data from unknown or untrusted clients. It uses TCP port `6010`.
+
+### Experiment 11: Client-Server Distinct Vowel Counter
+
+Objective: send text from a client to a server and count how many different vowels (`a`, `e`, `i`, `o`, `u`) appear. The count is case-insensitive, so repeated or uppercase vowels count once.
+
+View the source with curl:
+
+```powershell
+curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp11_distinct_vowel_counter/server.py"
+curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp11_distinct_vowel_counter/client.py"
+```
+
+Start the server in one terminal, then run the client in another and enter text when prompted:
+
+```powershell
+python .\exp11_distinct_vowel_counter\server.py
+python .\exp11_distinct_vowel_counter\client.py
+```
+
+The server listens on `127.0.0.1:6011` and can process multiple client connections sequentially.
