@@ -82,3 +82,23 @@ python .\exp8_rmi_calculator_bank\client.py
 ```
 
 This RMI demo uses JSON messages over TCP sockets and requires only Python 3.10 or later.
+
+### Experiment 9: One-to-Many TCP Message Broadcast
+
+Objective: run one TCP server that accepts multiple clients and broadcasts each client's messages to all connected clients.
+
+View the source with curl:
+
+```powershell
+curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp9_broadcast_messaging/server.py"
+curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp9_broadcast_messaging/client.py"
+```
+
+Start the server in one terminal, then run the client in two or more additional terminals. Enter a name for each client, then type messages to broadcast them. Enter `/quit` to disconnect a client; press Ctrl+C in the server terminal to stop the server.
+
+```powershell
+python .\exp9_broadcast_messaging\server.py
+python .\exp9_broadcast_messaging\client.py
+```
+
+The sample binds to `127.0.0.1:6009` for clients on the same computer. To connect from another computer, set `HOST` in both files to the server's LAN address and allow TCP port 6009 through its firewall.
