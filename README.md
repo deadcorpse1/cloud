@@ -1,4 +1,11 @@
-### Experiment 1: Socket-based client-server IPC
+# Cloud and Distributed Computing Lab Experiments
+
+This repository contains twelve networking, distributed-systems, and cloud lab experiments. Run Python examples with Python 3.10 or later. Unless noted otherwise, the examples use localhost and are intended to run on one computer.
+
+### Experiment 1: Socket-based Client-Server IPC
+
+The basic pair sends a list of integers from a client and returns their sum. Start the server, then run the client in separate terminals:
+
 ```powershell
 curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp1_ipc_communication/server.py"
 curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp1_ipc_communication/client.py"
@@ -8,15 +15,39 @@ To run
 python .\exp1_ipc_communication\server.py  # Terminal 1
 python .\exp1_ipc_communication\client.py  # Terminal 2
 ```
+
+The folder also contains a pickle-based object serialization variant. Start the matching server and client in separate terminals:
+
+```powershell
+curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp1_ipc_communication/server_pickel.py"
+curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp1_ipc_communication/client_pickel.py"
+```
+
+```powershell
+python .\exp1_ipc_communication\server_pickel.py  # Terminal 1
+python .\exp1_ipc_communication\client_pickel.py  # Terminal 2
+```
+
+Pickle can execute code while loading; only use this variant with trusted local clients.
+
 ### Experiment 2: Remote Method Invocation (RMI)
+
+This experiment uses Pyro4 to call remote calculator methods. Install its dependency first:
+
+```powershell
+python -m pip install Pyro4
+```
+
 ```powershell
 curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp2_rmi/server.py"
 curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp2_rmi/client.py"
 ```
-To run
+
+Run the server, copy its printed URI, and provide that URI to the client in a second terminal:
+
 ```powershell
-python .\exp2_rmi\server.py
-python .\exp2_rmi\client.py
+python .\exp2_rmi\server.py  # Terminal 1
+python .\exp2_rmi\client.py  # Terminal 2
 ```
 
 ### Experiment 3: Ricart-Agrawala distributed mutual exclusion
@@ -142,3 +173,23 @@ python .\exp11_distinct_vowel_counter\client.py
 ```
 
 The server listens on `127.0.0.1:6011` and can process multiple client connections sequentially.
+
+### Experiment 12: Threaded Message Passing and Critical-Section Demo
+
+Objective: accept multiple TCP clients on a threaded server, forward messages between clients, and serialize critical-section requests with a server-side lock. The client menu offers message passing and labeled Ricart-Agrawala, token-ring, and centralized-coordinator examples; all three critical-section options in this script use the same server-side lock for demonstration.
+
+View the source with curl:
+
+```powershell
+curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp12_threading/server.py"
+curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp12_threading/client.py"
+```
+
+Start the server in one terminal and run two or more clients in separate terminals. Select **1** to send a message to other connected clients, or select **2**, **3**, or **4** to request the critical section. Select **5** to exit the client.
+
+```powershell
+python .\exp12_threading\server.py  # Terminal 1
+python .\exp12_threading\client.py  # Terminal 2 and additional terminals
+```
+
+This example binds to `127.0.0.1:5000`, the same address and port used by Experiment 1's basic socket demo. Run those experiments separately, or change the port consistently in the server and client before running them together.
