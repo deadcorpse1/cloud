@@ -62,3 +62,23 @@ curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud
 ```powershell
 curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp7_hypervisor_clustering/README.md"
 ```
+
+### Experiment 8: RMI Calculator and Bank Service
+
+Objective: use remote method invocation to calculate a factorial, find the most frequent value in an integer array, and perform bank deposits and withdrawals. The service starts with a balance of `1000.00`; its balance is held in memory and resets when the server stops.
+
+View the source with curl:
+
+```powershell
+curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp8_rmi_calculator_bank/server.py"
+curl.exe --ssl-no-revoke -L "https://raw.githubusercontent.com/deadcorpse1/cloud/main/exp8_rmi_calculator_bank/client.py"
+```
+
+Run the server in one terminal and the client in another. Use the client menu to select `factorial`, `mode`, `deposit`, `withdraw`, or `balance`; enter `quit` to exit. If values tie for the mode, the first such value in the input array is returned.
+
+```powershell
+python .\exp8_rmi_calculator_bank\server.py
+python .\exp8_rmi_calculator_bank\client.py
+```
+
+This RMI demo uses JSON messages over TCP sockets and requires only Python 3.10 or later.
