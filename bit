@@ -1,1 +1,560 @@
+1. Client-Server Communication
 
+Question: Write a Python TCP client-server program. The client sends a message to the server, and the server displays it and sends a reply.
+
+server1.py
+
+import socket
+ 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(("localhost", 5000))
+s.listen(1)
+ 
+print("Server waiting for client...")
+conn, addr = s.accept()
+print("Connected:", addr)
+ 
+msg = conn.recv(1024).decode()
+print("Client:", msg)
+ 
+conn.send("Message received by server".encode())
+ 
+conn.close()
+s.close()
+
+client1.py
+
+import socket
+ 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(("localhost", 5000))
+ 
+msg = input("Enter message: ")
+s.send(msg.encode())
+ 
+reply = s.recv(1024).decode()
+print("Server:", reply)
+ 
+s.close()
+
+Sample Output
+
+Enter message: Hello Server
+Server: Message received by server
+
+
+Distributed Systems Lab | Page 
+
+2. Client Sends Marks; Server Calculates Score, Pass/Fail and Rank
+
+Question: Write a client-server program in which the client sends three subject marks. The server calculates total, average, pass/fail and a rank category.
+
+server2.py
+
+import socket
+ 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(("localhost", 5001))
+s.listen(1)
+ 
+print("Server waiting...")
+conn, addr = s.accept()
+ 
+data = conn.recv(1024).decode()
+marks = list(map(int, data.split(",")))
+ 
+if len(marks) != 3 or any(m < 0 or m > 100 for m in marks):
+    reply = "Invalid marks"
+else:
+    total = sum(marks)
+    avg = total / len(marks)
+    result = "PASS" if all(m >= 35 for m in marks) else "FAIL"
+ 
+    if result == "FAIL":
+        rank = "No rank"
+    elif avg >= 90:
+        rank = "Rank 1"
+    elif avg >= 75:
+        rank = "Rank 2"
+    elif avg >= 50:
+        rank = "Rank 3"
+    else:
+        rank = "Rank 4"
+ 
+    reply = f"Total: {total}, Average: {avg:.2f}, Result: {result}, {rank}"
+ 
+conn.send(reply.encode())
+conn.close()
+s.close()
+
+client2.py
+
+import socket
+ 
+marks = []
+for i in range(3):
+    marks.append(int(input(f"Enter mark {i+1} (0-100): ")))
+ 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(("localhost", 5001))
+s.send(",".join(map(str, marks)).encode())
+ 
+print("Result from server:")
+print(s.recv(1024).decode())
+ 
+s.close()
+
+Sample Output
+
+Enter mark 1 (0-100): 95
+Enter mark 2 (0-100): 85
+Enter mark 3 (0-100): 90
+Result from server:
+Total: 270, Average: 90.00, Result: PASS, Rank 1
+
+Note: The rank is a grade category based on average, not a true class rank. A true rank requires comparing multiple students.
+
+
+Distributed Systems Lab | Page 
+
+3. Client-Server Communication with Serialization and Deserialization
+
+Question: Write a TCP client-server program that serializes a student dictionary, sends it to the server, deserializes it, and returns a serialized response.
+
+server3.py
+
+import socket
+import pickle
+ 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(("localhost", 5002))
+s.listen(1)
+ 
+print("Server waiting...")
+conn, addr = s.accept()
+ 
+data = conn.recv(4096)
+student = pickle.loads(data)  # Deserialize trusted data
+print("Received data:", student)
+ 
+reply = {"message": "Data received successfully"}
+conn.send(pickle.dumps(reply))
+ 
+conn.close()
+s.close()
+
+client3.py
+
+import socket
+import pickle
+ 
+student = {
+    "name": input("Enter name: "),
+    "mark": int(input("Enter mark: "))
+}
+ 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(("localhost", 5002))
+s.send(pickle.dumps(student))  # Serialize dictionary
+ 
+reply = pickle.loads(s.recv(4096))
+print("Server response:", reply)
+ 
+s.close()
+
+Sample Output
+
+Enter name: Arun
+Enter mark: 88
+Server response: {'message': 'Data received successfully'}
+
+Note: Only deserialize pickle data from trusted sources. This simple lab example assumes each serialized message fits in one recv() call.
+
+
+Distributed Systems Lab | Page 
+
+4. Client Sends Filename; Server Returns Lines, Words and File Size
+
+Question: Write a client-server program where the client sends a filename. The server checks for the file and returns its number of lines, words and size in bytes.
+
+server4.py
+
+import socket
+import os
+ 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(("localhost", 5003))
+s.listen(1)
+ 
+print("Server waiting...")
+conn, addr = s.accept()
+filename = conn.recv(1024).decode().strip()
+ 
+if not filename or os.path.basename(filename) != filename:
+    reply = "Invalid filename"
+elif not os.path.isfile(filename):
+    reply = "File not found"
+else:
+    with open(filename, "r", encoding="utf-8") as f:
+        content = f.read()
+ 
+    lines = len(content.splitlines())
+    words = len(content.split())
+    size = os.path.getsize(filename)
+    reply = f"Lines: {lines}, Words: {words}, Size: {size} bytes"
+ 
+conn.send(reply.encode())
+conn.close()
+s.close()
+
+client4.py
+
+import socket
+ 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(("localhost", 5003))
+ 
+filename = input("Enter filename: ")
+s.send(filename.encode())
+ 
+print("File details:", s.recv(4096).decode())
+s.close()
+
+Sample Output
+
+Enter filename: sample.txt
+File details: Lines: 3, Words: 12, Size: 65 bytes
+
+Note: Create sample.txt in the server's current working directory first. Example counts and size depend on the actual file contents.
+
+
+Distributed Systems Lab | Page 
+
+5. Token Ring Algorithm
+
+Question: Simulate processes arranged in a ring. A single token circulates between processes, and only the process holding the token enters the critical section.
+
+token_ring.py
+
+import time
+ 
+n = int(input("Enter number of processes: "))
+ 
+if n <= 0:
+    print("Number of processes must be positive")
+else:
+    token = 0
+ 
+    for i in range(2 * n):
+        print("Process", token, "has the token")
+        print("Process", token, "enters critical section")
+        print("Process", token, "exits critical section")
+ 
+        token = (token + 1) % n
+        print("Token passed to next process\\n")
+        time.sleep(0.5)
+
+Sample Output
+
+Enter number of processes: 3
+Process 0 has the token
+Process 0 enters critical section
+Process 0 exits critical section
+Token passed to next process
+
+Note: This is a single-program simulation of the token ring, not separate operating-system processes.
+
+
+Distributed Systems Lab | Page 
+
+6. RMI — Celsius to Fahrenheit Conversion
+
+Question: Implement Remote Method Invocation to convert a temperature from Celsius to Fahrenheit on the server and display the result on the client.
+
+temp_server.py
+
+import Pyro4
+ 
+@Pyro4.expose
+class Temperature:
+    def celsius_to_fahrenheit(self, c):
+        return (c * 9 / 5) + 32
+ 
+daemon = Pyro4.Daemon()
+uri = daemon.register(Temperature())
+ 
+print("Server URI:", uri)
+print("Temperature server running...")
+daemon.requestLoop()
+
+temp_client.py
+
+import Pyro4
+ 
+uri = input("Enter server URI: ")
+temp = Pyro4.Proxy(uri)
+ 
+c = float(input("Enter Celsius: "))
+f = temp.celsius_to_fahrenheit(c)
+ 
+print("Fahrenheit:", f)
+
+Sample Output
+
+Enter Celsius: 25
+Fahrenheit: 77.0
+
+Note: Install Pyro4 with python -m pip install Pyro4. Run server first, copy its full URI, then paste it into the client. This direct-URI example is intended for localhost.
+
+
+Distributed Systems Lab | Page 
+
+7. Berkeley's Clock Synchronization Algorithm
+
+Question: Implement a simplified Berkeley algorithm. A master gathers clock readings, calculates their average, and adjusts each clock to the average.
+
+berkeley.py
+
+clocks = [10, 20, 30, 40]
+ 
+print("Original clock times:")
+for i, t in enumerate(clocks):
+    print("Clock", i, ":", t, "seconds")
+ 
+average = sum(clocks) / len(clocks)
+print("\\nMaster clock: Clock 0")
+print("Average time:", average, "seconds")
+ 
+print("\\nClock adjustments:")
+for i in range(len(clocks)):
+    adjustment = average - clocks[i]
+    print("Clock", i, "adjustment:", adjustment)
+    clocks[i] = average
+ 
+print("\\nSynchronized clocks:")
+for i, t in enumerate(clocks):
+    print("Clock", i, ":", t, "seconds")
+
+Sample Output
+
+Original clock times:
+Clock 0 : 10 seconds
+Clock 1 : 20 seconds
+Clock 2 : 30 seconds
+Clock 3 : 40 seconds
+Average time: 25.0 seconds
+All synchronized clocks: 25.0 seconds
+
+Note: This educational simulation ignores network delay and assumes equally reliable clock readings.
+
+
+Distributed Systems Lab | Page 
+
+8. Simulate Clock Drift Over One Minute
+
+Question: Simulate two clocks starting at the same time. Clock B runs faster than Clock A by 10 milliseconds per second. Calculate the difference after one minute.
+
+clock_drift.py
+
+clock_a = 0.0
+clock_b = 0.0
+ 
+drift = 0.010  # 10 milliseconds per second
+duration = 60
+ 
+for i in range(duration):
+    clock_a += 1.0
+    clock_b += 1.0 + drift
+ 
+difference = clock_b - clock_a
+ 
+print("Clock A:", clock_a, "seconds")
+print("Clock B:", round(clock_b, 3), "seconds")
+print("Difference:", round(difference, 3), "seconds")
+print("Difference in milliseconds:", round(difference * 1000, 1), "ms")
+
+Sample Output
+
+Clock A: 60.0 seconds
+Clock B: 60.6 seconds
+Difference: 0.6 seconds
+Difference in milliseconds: 600.0 ms
+
+Note: Drift = 10 ms/s × 60 s = 600 ms.
+
+
+Distributed Systems Lab | Page 
+
+9. Online Shopping Application Using RMI
+
+Question: Create an RMI shopping application. The client sends a product name and quantity. The server stores product prices, calculates total cost, applies a discount, and returns the discount and final amount.
+
+shop_server.py
+
+import Pyro4
+ 
+@Pyro4.expose
+class Shop:
+    products = {
+        "laptop": 50000,
+        "phone": 20000,
+        "headphone": 2000
+    }
+ 
+    def buy(self, name, quantity):
+        name = name.lower()
+ 
+        if name not in self.products:
+            return {"error": "Product not found"}
+        if quantity <= 0:
+            return {"error": "Invalid quantity"}
+ 
+        total = self.products[name] * quantity
+ 
+        if total >= 50000:
+            discount = total * 0.10
+        elif total >= 20000:
+            discount = total * 0.05
+        else:
+            discount = 0
+ 
+        return {
+            "product": name,
+            "quantity": quantity,
+            "total": total,
+            "discount": discount,
+            "final": total - discount
+        }
+ 
+daemon = Pyro4.Daemon()
+uri = daemon.register(Shop())
+ 
+print("Shopping server URI:", uri)
+daemon.requestLoop()
+
+shop_client.py
+
+import Pyro4
+ 
+uri = input("Enter server URI: ")
+shop = Pyro4.Proxy(uri)
+ 
+name = input("Enter product (laptop/phone/headphone): ")
+quantity = int(input("Enter quantity: "))
+ 
+result = shop.buy(name, quantity)
+ 
+if "error" in result:
+    print(result["error"])
+else:
+    print("\\n--- BILL ---")
+    print("Product:", result["product"])
+    print("Quantity:", result["quantity"])
+    print("Total:", result["total"])
+    print("Discount:", result["discount"])
+    print("Final Amount:", result["final"])
+
+Sample Output
+
+Enter product (laptop/phone/headphone): laptop
+Enter quantity: 1
+Total: 50000
+Discount: 5000.0
+Final Amount: 45000.0
+
+Note: Sample discount rules: 10% for totals ≥ ₹50,000; 5% for totals ≥ ₹20,000 but below ₹50,000; otherwise 0%.
+
+
+Distributed Systems Lab | Page 
+
+10. Lamport Logical Clock
+
+Question: Implement Lamport logical clocks for two processes. Demonstrate local events, sending a message, and receiving a message with the correct timestamp update.
+
+lamport_clock.py
+
+P1 = 0
+P2 = 0
+ 
+# P1 performs a local event
+P1 += 1
+print("P1 local event:", P1)
+ 
+# P1 sends a message
+P1 += 1
+message_time = P1
+print("P1 sends message at:", message_time)
+ 
+# P2 performs a local event
+P2 += 1
+print("P2 local event:", P2)
+ 
+# P2 receives the message
+P2 = max(P2, message_time) + 1
+print("P2 receives message at:", P2)
+ 
+# P2 performs another local event
+P2 += 1
+print("P2 next local event:", P2)
+
+Sample Output
+
+P1 local event: 1
+P1 sends message at: 2
+P2 local event: 1
+P2 receives message at: 3
+P2 next local event: 4
+
+Note: On receive: C = max(local clock, received timestamp) + 1.
+
+
+Distributed Systems Lab | Page 
+
+11. Round Robin Task Scheduler with Two Workers
+
+Question: Create multiple tasks with different processing requirements. Assign them alternately to two workers using round robin, simulate task completion times, and print the number of tasks assigned to each worker.
+
+task_scheduler.py
+
+tasks = [4, 2, 6, 3, 5, 1]
+ 
+workers = {
+    "Worker 1": {"time": 0, "count": 0},
+    "Worker 2": {"time": 0, "count": 0}
+}
+ 
+print("Round Robin Task Scheduling\\n")
+ 
+for i, processing_time in enumerate(tasks):
+    if i % 2 == 0:
+        worker = "Worker 1"
+    else:
+        worker = "Worker 2"
+ 
+    workers[worker]["time"] += processing_time
+    workers[worker]["count"] += 1
+    completion = workers[worker]["time"]
+ 
+    print(
+        f"Task {i+1}: Time = {processing_time}, "
+        f"Worker = {worker}, Completion time = {completion}"
+    )
+ 
+print("\\nWorker Summary")
+for worker, details in workers.items():
+    print(worker)
+    print("Tasks assigned:", details["count"])
+    print("Total processing time:", details["time"])
+
+Sample Output
+
+Task 1: Time = 4, Worker = Worker 1, Completion time = 4
+Task 2: Time = 2, Worker = Worker 2, Completion time = 2
+Task 3: Time = 6, Worker = Worker 1, Completion time = 10
+Task 4: Time = 3, Worker = Worker 2, Completion time = 5
+Task 5: Time = 5, Worker = Worker 1, Completion time = 15
+Task 6: Time = 1, Worker = Worker 2, Completion time = 6
+Worker 1: 3 tasks, total processing time 15
+Worker 2: 3 tasks, total processing time 6
+
+Note: Each worker processes its assigned tasks sequentially. The two workers can operate in parallel; this simulates round-robin assignment rather than time-sliced CPU scheduling.
